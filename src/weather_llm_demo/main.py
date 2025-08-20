@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from .weather_agent import WeatherAgent
 from .mcp_server import MCPWeatherServer
 from .openrouter_client import OpenRouterClient
-
 # Load environment variables from .env file
 load_dotenv()
 

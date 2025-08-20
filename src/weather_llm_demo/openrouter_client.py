@@ -42,7 +42,7 @@ class OpenRouterClient:
             "model": self.model,
             "messages": messages,
             "temperature": 0.7,
-            "max_tokens": 500,
+            "max_tokens": 1024,
         }
 
         try:
