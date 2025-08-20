@@ -116,16 +116,16 @@ class WeatherAgent:
                 "high_c": f_to_c(forecast_data["calendarDayTemperatureMax"][0]),
                 "low_c": f_to_c(forecast_data["calendarDayTemperatureMin"][0]),
                 "conditions": forecast_data["narrative"][0],
-                "precipitation_chance": forecast_data["daypart"][1]["precipChance"],
-                "wind_kmh": round(forecast_data["daypart"][1].get("windSpeed", 0) * 1.60934, 1),
+                "precipitation_chance": forecast_data["daypart"][0]["precipChance"][1],
+                "wind_kmh": round(forecast_data["daypart"][0].get("windSpeed", [])[1] * 1.60934, 1),
             }
             
             tomorrow_forecast = {
                 "high_c": f_to_c(forecast_data["calendarDayTemperatureMax"][1]),
                 "low_c": f_to_c(forecast_data["calendarDayTemperatureMin"][1]),
                 "conditions": forecast_data["narrative"][1],
-                "precipitation_chance": forecast_data["daypart"][2]["precipChance"],
-                "wind_kmh": round(forecast_data["daypart"][2].get("windSpeed", 0) * 1.60934, 1),
+                "precipitation_chance": forecast_data["daypart"][0]["precipChance"][2],
+                "wind_kmh": round(forecast_data["daypart"][0].get("windSpeed", [])[2] * 1.60934, 1),
             }
 
             return {
