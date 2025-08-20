@@ -144,7 +144,7 @@
     <div class="container">
         <div class="header">
             <h1>🌤️ Weather LLM Demo</h1>
-            <p>Rome Station IROME8278 - Multilingual AI Weather Assistant</p>
+            <p><span id="stationInfo">Rome Station IROME8278</span> - Multilingual AI Weather Assistant - Powered by <span id="llmModel">LLM Model</span></p>
         </div>
         
         <div class="main-grid">
@@ -298,8 +298,23 @@
             return messageId;
         }
         
-        // Load weather on page load
+        // Fetch and display configuration
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                document.getElementById('llmModel').textContent = config.llm_model;
+                document.getElementById('stationInfo').textContent = config.location + ' Station ' + config.station_id;
+            } catch (error) {
+                console.error('Error loading config:', error);
+                document.getElementById('llmModel').textContent = 'Unknown Model';
+                document.getElementById('stationInfo').textContent = 'Rome Station IROME8278';
+            }
+        }
+        
+        // Load weather and config on page load
         loadWeather();
+        loadConfig();
         setInterval(loadWeather, 60000); // Refresh every minute
     </script>
 </body>

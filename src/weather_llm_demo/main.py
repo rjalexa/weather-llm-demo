@@ -4,10 +4,14 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from pathlib import Path
-
+import os
+from dotenv import load_dotenv
 from .weather_agent import WeatherAgent
 from .mcp_server import MCPWeatherServer
 from .openrouter_client import OpenRouterClient
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = FastAPI(title="Weather LLM Demo - Rome IROME8278")
 
@@ -141,6 +145,16 @@ async def chat(request: ChatRequest):
 async def health():
     """Health check endpoint"""
     return {"status": "healthy", "service": "Weather LLM Demo", "station": "IROME8278"}
+
+
+@app.get("/api/config")
+async def get_config():
+    """Get configuration information"""
+    return {
+        "llm_model": os.getenv("TOOL_CALLING_OPENROUTER_LLM_MODEL", "openai/gpt-3.5-turbo"),
+        "station_id": os.getenv("STATION_ID", "IROME8278"),
+        "location": os.getenv("LOCATION", "Rome, Italy")
+    }
 
 
 if __name__ == "__main__":
