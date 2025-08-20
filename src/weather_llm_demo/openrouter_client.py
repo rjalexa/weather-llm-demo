@@ -8,7 +8,8 @@ class OpenRouterClient:
     def __init__(self, api_key_file: str = ".openrouter_api_key"):
         self.api_key = self._load_api_key(api_key_file)
         self.base_url = "https://openrouter.ai/api/v1"
-        self.model = "openai/gpt-3.5-turbo"  # Reliable fallback model
+        import os
+        self.model = os.getenv("TOOL_CALLING_OPENROUTER_LLM_MODEL", "openai/gpt-3.5-turbo")  # Configurable model with fallback
 
     def _load_api_key(self, api_key_file: str) -> str:
         """Load API key from file"""
