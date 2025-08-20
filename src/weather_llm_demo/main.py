@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+from datetime import datetime
 import os
 from dotenv import load_dotenv
 from .weather_agent import WeatherAgent
@@ -29,15 +30,16 @@ mcp_server = MCPWeatherServer()
 openrouter_client = OpenRouterClient()
 
 # Italian system prompt
-SYSTEM_PROMPT = """Sei un assistente meteorologico per Roma, Italia (Stazione IROME8278). 
-Rispondi alla domanda nella stessa lingua in cui è stata posta e fai attenzione a personalizzare 
-le raccomandazioni che generi in base alle condizioni meteo rilevate dall'agente. 
-In particolare:
-- Se la temperatura è superiore a 30 gradi ricorda che fa caldo e di vestirsi opportunamente e idratarsi bene
-- Se fa meno di 16 gradi di coprirsi bene
-- Se minaccia di piovere di munirsi di ombrello
-- Fornisci sempre consigli pratici basati sulle condizioni attuali
-- Usa emoji appropriate per rendere la risposta più amichevole"""
+SYSTEM_PROMPT = """You are a weather assistant for Rome, Italy (Station IROME8278).
+ALWAYS respond in the same language as the user's question.
+Personalize your recommendations based on the weather data provided by the agent.
+Be mindful of the current time. For example, if it's evening, the recommendations should be for the evening and night, not for the maximum temperature of the day.
+Key guidelines:
+- If temperature > 30°C: It's hot. Advise light clothing and hydration.
+- If temperature < 16°C: It's cool. Advise warm clothing.
+- If rain is likely: Advise taking an umbrella.
+- Always provide practical, actionable advice.
+- Use appropriate emojis to make the response friendly."""
 
 
 class ChatRequest(BaseModel):
@@ -109,8 +111,9 @@ async def chat(request: ChatRequest):
         ]
 
         # Add weather context
-        weather_context = "\n\n[Dati meteo attuali da IROME8278]:\n"
+        weather_context = "\n\n[Current weather data from IROME8278]:\n"
         current = weather_data["result"]["current"]
+        weather_context += f"Ora attuale: {datetime.now().strftime('%H:%M')}, "
         weather_context += f"Temperatura: {current.get('temperature_c')}°C, "
         weather_context += f"Umidità: {current.get('humidity')}%, "
         weather_context += f"Condizioni: {current.get('description')}"

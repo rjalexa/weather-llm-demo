@@ -66,51 +66,17 @@ class OpenRouterClient:
     def _create_demo_response(
         self, messages: List[Dict], tool_results: Optional[Dict] = None
     ) -> Dict[str, Any]:
-        """Create intelligent demo responses based on weather conditions"""
-        last_message = messages[-1]["content"] if messages else ""
-
-        # Language detection
-        lang_indicators = {
-            "it": ["ciao", "come", "che", "oggi", "tempo", "fa", "piove"],
-            "fr": ["bonjour", "quel", "fait", "temps", "aujourd"],
-            "es": ["hola", "qué", "hace", "tiempo", "llueve"],
-            "de": ["hallo", "wie", "wetter", "heute", "regnet"],
+        """Create a generic demo response for when the API key is not available."""
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "Welcome! The app is in demo mode. Please provide an OpenRouter API key to get live weather information.",
+                    }
+                }
+            ]
         }
-
-        language = "en"
-        for lang, words in lang_indicators.items():
-            if any(word in last_message.lower() for word in words):
-                language = lang
-                break
-
-        # Generate weather-aware response
-        if tool_results and "current" in tool_results:
-            temp = tool_results["current"].get("temperature_c", 22)
-            humidity = tool_results["current"].get("humidity", 60)
-            conditions = tool_results["current"].get("description", "Clear")
-
-            responses = {
-                "it": self._generate_italian_response(
-                    temp, humidity, conditions, tool_results
-                ),
-                "fr": self._generate_french_response(temp, humidity, conditions),
-                "es": self._generate_spanish_response(temp, humidity, conditions),
-                "de": self._generate_german_response(temp, humidity, conditions),
-                "en": self._generate_english_response(temp, humidity, conditions),
-            }
-
-            response = responses.get(language, responses["en"])
-        else:
-            greetings = {
-                "it": "Benvenuto! Sono il tuo assistente meteo per Roma. Come posso aiutarti?",
-                "fr": "Bienvenue! Je suis votre assistant météo pour Rome. Comment puis-je vous aider?",
-                "es": "¡Bienvenido! Soy tu asistente meteorológico para Roma. ¿Cómo puedo ayudarte?",
-                "de": "Willkommen! Ich bin Ihr Wetterassistent für Rom. Wie kann ich Ihnen helfen?",
-                "en": "Welcome! I'm your weather assistant for Rome. How can I help you?",
-            }
-            response = greetings.get(language, greetings["en"])
-
-        return {"choices": [{"message": {"role": "assistant", "content": response}}]}
 
     def _generate_italian_response(self, temp, humidity, conditions, tool_results):
         """Generate detailed Italian weather response"""
