@@ -1,0 +1,8 @@
+.openrouter_api_key
+__pycache__/
+*.pyc
+.env
+venv/
+*.log
+.DS_Store
+.openrouter_api_key

@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  weather-llm:
+    build:
+      context: .
+      dockerfile: Dockerfile.uv
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./.openrouter_api_key:/app/.openrouter_api_key:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
