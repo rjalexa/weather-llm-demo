@@ -13,7 +13,36 @@ class MCPWeatherServer:
 
     def _define_tools(self) -> List[Dict[str, Any]]:
         """Define available tools in MCP format"""
-        return [
+        # Define tools in OpenRouter format
+        self.openrouter_tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_current_weather",
+                    "description": "Get current weather conditions from Rome station IROME8278",
+                    "parameters": {"type": "object", "properties": {}, "required": []},
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                "name": "get_weather_forecast",
+                "description": "Get weather forecast for Rome",
+                "parameters": {"type": "object", "properties": {}, "required": []},
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_all_weather",
+                    "description": "Get both current conditions and forecast",
+                    "parameters": {"type": "object", "properties": {}, "required": []},
+                }
+            },
+        ]
+        
+        # Preserve existing MCP format for backward compatibility
+        self.mcp_tools = [
             {
                 "name": "get_current_weather",
                 "description": "Get current weather conditions from Rome station IROME8278",
@@ -30,6 +59,12 @@ class MCPWeatherServer:
                 "input_schema": {"type": "object", "properties": {}, "required": []},
             },
         ]
+        
+        return self.mcp_tools
+
+    def get_openrouter_tools(self) -> List[Dict[str, Any]]:
+        """Return tools definition in OpenRouter format"""
+        return self.openrouter_tools
 
     async def handle_tool_call(
         self, tool_name: str, arguments: Optional[Dict[str, Any]] = None

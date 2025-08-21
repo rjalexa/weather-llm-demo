@@ -158,42 +158,76 @@ async def get_mcp_tools():
 async def chat(request: ChatRequest):
     """Chat endpoint with weather-aware responses"""
     try:
-        # Get weather data using MCP server
-        weather_data = await mcp_server.handle_tool_call("get_all_weather")
-
+        import json
+        
         # Prepare messages for OpenRouter
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": request.message},
         ]
 
-        # Add weather context
-        weather_context = f"\n\n[Current weather data from {STATION_ID}]:\n"
-        current = weather_data["result"]["current"]
-        weather_context += f"Ora attuale: {datetime.now().strftime('%H:%M')}, "
-        weather_context += f"Temperatura: {current.get('temperature_c')}°C, "
-        weather_context += f"Umidità: {current.get('humidity')}%, "
-        weather_context += f"Condizioni: {current.get('description')}"
+        # Get tools from MCP server
+        tools = mcp_server.get_openrouter_tools()
 
-        if request.include_forecast:
-            forecast = weather_data["result"]["forecast"]
-            weather_context += f"\nPrevisioni oggi: {forecast['today']['high_c']}°C/{forecast['today']['low_c']}°C"
-            weather_context += f"\nDomani: {forecast['tomorrow']['high_c']}°C/{forecast['tomorrow']['low_c']}°C"
-
-        messages[-1]["content"] += weather_context
-
-        # Get response from OpenRouter
+        # Initial API call with tools
         response = await openrouter_client.create_completion(
-            messages=messages, tool_results=weather_data["result"]
+            messages=messages, tools=tools
         )
 
-        # Extract response text
-        response_text = response["choices"][0]["message"]["content"]
+        # Extract response message
+        response_message = response["choices"][0]["message"]
+        
+        # Initialize tracking variables
+        tool_calls_made = []
+        weather_data = None
+
+        # Check if the response contains tool calls
+        if "tool_calls" in response_message and response_message["tool_calls"]:
+            # Process tool calls
+            tool_calls = response_message["tool_calls"]
+            
+            # Append the original assistant message with tool calls
+            messages.append(response_message)
+            
+            # Process each tool call
+            for tool_call in tool_calls:
+                tool_name = tool_call["function"]["name"]
+                # Parse tool arguments if they exist
+                tool_args_str = tool_call["function"].get("arguments", "{}")
+                try:
+                    tool_args = json.loads(tool_args_str) if tool_args_str else {}
+                except json.JSONDecodeError:
+                    tool_args = {}
+                
+                # Track tool calls made
+                tool_calls_made.append(tool_name)
+                
+                # Execute the tool
+                tool_result = await mcp_server.handle_tool_call(tool_name, tool_args)
+                
+                # Store weather data if this is a weather tool
+                if tool_name in ["get_current_weather", "get_weather_forecast", "get_all_weather"]:
+                    weather_data = tool_result["result"]
+                
+                # Append tool result message
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call["id"],
+                    "name": tool_name,
+                    "content": json.dumps(tool_result["result"])  # JSON-serialize the result
+                })
+            
+            # Second API call without tools to get final response
+            response = await openrouter_client.create_completion(messages=messages)
+            response_message = response["choices"][0]["message"]
+        
+        # Extract final response text
+        response_text = response_message.get("content", "") or ""
 
         return ChatResponse(
             response=response_text,
-            weather_data=weather_data["result"],
-            tool_calls=["get_all_weather"],
+            weather_data=weather_data,
+            tool_calls=tool_calls_made if tool_calls_made else None,
         )
 
     except Exception as e:
