@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather LLM Demo - Rome IROME8278</title>
+    <title>Weather LLM Demo</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -144,9 +144,9 @@
     <div class="container">
         <div class="header">
             <h1>🌤️ Weather LLM Demo</h1>
-            <p><span id="stationInfo">Rome Station IROME8278</span> - Multilingual AI Weather Assistant - Powered by <span id="llmModel">LLM Model</span></p>
+            <p><span id="stationInfo"></span> - Multilingual AI Weather Assistant - Powered by <span id="llmModel">LLM Model</span></p>
         </div>
-        
+
         <div class="main-grid">
             <div class="card">
                 <h2>🌡️ Current Conditions</h2>
@@ -154,7 +154,7 @@
                     <div class="loading"></div>
                 </div>
             </div>
-            
+
             <div class="card">
                 <h2>📅 Forecast</h2>
                 <div id="forecast">
@@ -162,29 +162,30 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="card">
             <h2>💬 Chat with Weather Assistant</h2>
-            
+
             <div style="margin-bottom: 15px;">
                 <strong>Example queries (try in any language!):</strong>
                 <div>
-                    <span class="example-query" onclick="sendExample('Che tempo fa oggi a Roma?')">🇮🇹 Che tempo fa?</span>
-                    <span class="example-query" onclick="sendExample('What should I wear today?')">🇬🇧 What to wear?</span>
-                    <span class="example-query" onclick="sendExample('Quel temps fait-il?')">🇫🇷 Quel temps?</span>
-                    <span class="example-query" onclick="sendExample('¿Necesito paraguas?')">🇪🇸 ¿Paraguas?</span>
-                    <span class="example-query" onclick="sendExample('Devo portare lombrello?')">☔ Ombrello?</span>
+                    <span class="example-query" onclick="sendExample('È una buona giornata per un barbecue?')">🇮🇹 Faccio un barbecue?</span>
+                    <span class="example-query" onclick="sendExample('Should I go for a run this afternoon?')">🇬🇧 Go for a run?</span>
+                    <span class="example-query" onclick="sendExample('Puis-je faire du vélo ce soir?')">🇫🇷 Puis-je faire du vélo?</span>
+                    <span class="example-query" onclick="sendExample('¿Es un buen día para lavar el coche?')">🇪🇸 Puedo lavar el coche?r?</span>
+                    <span class="example-query" onclick="sendExample('Soll ich heute die Wäsche draußen trocknen?')">🇩🇪 Wäsche draußen trocknen?</span>
+                    <span class="example-query" onclick="sendExample('É um bom dia para ir à praia?')">🇵🇹 È un bom dia para ir à praia?</span>
                 </div>
             </div>
-            
+
             <div class="chat-messages" id="chatMessages">
                 <div class="message assistant">
-                    Ciao! Sono il tuo assistente meteo per Roma. Chiedimi qualsiasi cosa sul tempo! 
+                    Ciao! Sono il tuo assistente che consulta il meteo per darti consigli utili. 
                     <br><br>
-                    Hello! I'm your weather assistant for Rome. Ask me anything about the weather!
+                    Hello! I'm your weather aware assistant. Ask me anything!
                 </div>
             </div>
-            
+
             <div class="chat-input">
                 <input type="text" id="chatInput" placeholder="Ask about the weather in any language..." 
                        onkeypress="if(event.key==='Enter') sendMessage()">
@@ -192,14 +193,14 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         // Fetch and display weather data
         async function loadWeather() {
             try {
                 const response = await fetch('/api/weather/all');
                 const data = await response.json();
-                
+
                 // Display current conditions
                 const current = data.current;
                 document.getElementById('currentWeather').innerHTML = `
@@ -224,7 +225,7 @@
                         <strong>${current.description}</strong>
                     </div>
                 `;
-                
+
                 // Display forecast
                 const forecast = data.forecast;
                 document.getElementById('forecast').innerHTML = `
@@ -245,20 +246,20 @@
                 console.error('Error loading weather:', error);
             }
         }
-        
+
         // Chat functionality
         async function sendMessage() {
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
             if (!message) return;
-            
+
             // Add user message
             addMessage(message, 'user');
             input.value = '';
-            
+
             // Show loading
             const loadingId = addMessage('<div class="loading"></div>', 'assistant');
-            
+
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
@@ -268,24 +269,24 @@
                         include_forecast: true
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 // Remove loading and add response
                 document.getElementById(loadingId).remove();
                 addMessage(data.response, 'assistant');
-                
+
             } catch (error) {
                 document.getElementById(loadingId).remove();
                 addMessage('Error: Could not get response', 'assistant');
             }
         }
-        
+
         function sendExample(text) {
             document.getElementById('chatInput').value = text;
             sendMessage();
         }
-        
+
         function addMessage(text, type) {
             const messagesDiv = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
@@ -297,7 +298,7 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             return messageId;
         }
-        
+
         // Fetch and display configuration
         async function loadConfig() {
             try {
@@ -308,10 +309,10 @@
             } catch (error) {
                 console.error('Error loading config:', error);
                 document.getElementById('llmModel').textContent = 'Unknown Model';
-                document.getElementById('stationInfo').textContent = 'Rome Station IROME8278';
+                document.getElementById('stationInfo').textContent = 'Weather Station';
             }
         }
-        
+
         // Load weather and config on page load
         loadWeather();
         loadConfig();
