@@ -111,26 +111,31 @@ weather-llm-demo/
 └── .openrouter_api_key # API key (create this)
 ```
 ## Tool Calling Flow
-|
+
 The following diagram illustrates the tool calling process that fetches weather data and generates a response.
-|
+
 ```mermaid
 flowchart TD
-    A[User sends message via UI] --> B{FastAPI Backend}
-    B -->|POST api/chat| C[chat function in main.py]
-    C -->|handle tool call| D[MCPWeatherServer]
-    D -->|get weather data| E[WeatherAgent]
-    E -->|Scrapes weather site| F[Weather Data]
-    F --> E
-    E --> D
-    D --> C
-    C -->|create completion| G[OpenRouterClient]
-    G -->|Send prompt with data| H[OpenRouter API]
-    H -->|LLM response| G
-    G --> C
+    A[User sends message via UI] --> B[FastAPI Backend]
+    B --> C[chat function in main.py]
+    C --> G[OpenRouterClient]
+    G --> K["OpenRouter API with tool-enabled prompt"]
+    K --> D{LLM: Should I use get_all_weather tool?}
+    D -->|Yes| E[LLM requests get_all_weather tool]
+    D -->|No| L[LLM generates response directly]
+    E --> F[FastAPI handles tool call]
+    F --> H[MCPWeatherServer]
+    H --> I[WeatherAgent]
+    I --> J[Scrape weather.com]
+    J --> K2[Weather Data returned to FastAPI]
+    K2 --> G2[OpenRouterClient sends data back to LLM]
+    G2 --> M[LLM generates response with weather context]
+    M --> C
+    L --> G3[Return response to FastAPI]
+    G3 --> C
     C --> B
-    B -->|Send response| A
-|
+    B --> A
+
 ```
 |
 ### File and Line Number References
