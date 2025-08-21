@@ -1,64 +1,48 @@
-# 🌤️ Weather LLM Demo with UV Package Manager
+# 🌤️ Weather LLM Demo
 
-This project uses `uv` for fast, reliable Python dependency management.
+A simple demo of a weather aware LLM powered chatbot using a weather agent.
 
-## Prerequisites
+## Quick Start
 
-### Install UV (if not already installed)
+This guide will get you up and running in a few minutes.
 
-```bash
-# On macOS/Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
+### Prerequisites
 
-# Or with pip
-pip install uv
-```
+1.  **OpenRouter API Key**: You need an API key from [OpenRouter](https://openrouter.ai/).
+2.  **UV**: You need `uv`, the Python package installer. If you don't have it, install it:
+    ```bash
+    # On macOS/Linux
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
 
-## Quick Start with UV
+### 1. Setup your API Key
 
-### 1. Clone and Setup
-
-```bash
-# Navigate to project directory
-cd weather-llm-demo
-
-# Sync dependencies with uv
-uv sync
-```
-
-### 2. Configure API Key
+Create a file named `.openrouter_api_key` and paste your key into it.
 
 ```bash
-# Create API key file
 echo "your-openrouter-api-key" > .openrouter_api_key
-
-# Or run in demo mode without a key
-echo "demo_key" > .openrouter_api_key
 ```
+*Note: For a quick test without a real key, you can use `"demo_key"`.*
 
-### 3. Run the Application
+### 2. Install Dependencies
 
-#### Option A: Using the UV run script
+This command uses `uv` to install all the necessary Python packages defined in `pyproject.toml`.
+
 ```bash
-./run_uv.sh
+make install
 ```
 
-#### Option B: Using Make
+### 3. Run the Demo
+
+This command will start the web server on `http://127.0.0.1:8000`.
+
 ```bash
 make run
 ```
 
-#### Option C: Direct UV command
-```bash
-uv run python main.py
-```
+Open your browser to [http://127.0.0.1:8000](http://127.0.0.1:8000) to see the demo. For development with auto-reload, use `make dev`.
 
-#### Option D: Development mode with auto-reload
-```bash
-./dev_uv.sh
-# or
-make dev
-```
+---
 
 ## Available Commands
 
@@ -81,10 +65,10 @@ make docker-run    # Run with Docker
 uv sync
 
 # Run application
-uv run python main.py
+uv run python src/weather_llm_demo/main.py
 
 # Run with uvicorn (development)
-uv run uvicorn main:app --reload
+uv run uvicorn src.weather_llm_demo.main:app --reload
 
 # Add a new dependency
 uv add package-name
@@ -96,13 +80,13 @@ uv remove package-name
 uv sync --upgrade
 ```
 
-## Docker Deployment with UV
+## Docker Deployment
 
 ### Build and Run
 
 ```bash
-# Using docker-compose with UV-optimized Dockerfile
-docker-compose -f docker-compose.uv.yml up --build
+# Using docker-compose
+docker-compose up --build
 
 # Or using Make
 make docker-build
@@ -116,24 +100,46 @@ weather-llm-demo/
 ├── pyproject.toml       # UV/Python project configuration
 ├── uv.lock             # Locked dependencies (auto-generated)
 ├── .python-version     # Python version for UV
-├── main.py             # FastAPI application
-├── weather_agent.py    # Weather data scraper
-├── mcp_server.py       # MCP protocol implementation
-├── openrouter_client.py # OpenRouter API client
+├── src/weather_llm_demo/main.py # FastAPI application
+├── src/weather_llm_demo/weather_agent.py # Weather data scraper
+├── src/weather_llm_demo/mcp_server.py    # MCP protocol implementation
+├── src/weather_llm_demo/openrouter_client.py # OpenRouter API client
 ├── index.html          # Web interface
-├── run_uv.sh          # UV run script
-├── dev_uv.sh          # Development run script
+├── scripts/run_uv.sh   # UV run script
+├── scripts/dev_uv.sh   # Development run script
 ├── Makefile           # Convenience commands
 └── .openrouter_api_key # API key (create this)
 ```
+## Tool Calling Flow
+|
+The following diagram illustrates the tool calling process that fetches weather data and generates a response.
+|
+```mermaid
+flowchart TD
+    A[User sends message via UI] --> B{FastAPI Backend}
+    B -->|POST api/chat| C[chat function in main.py]
+    C -->|handle tool call| D[MCPWeatherServer]
+    D -->|get weather data| E[WeatherAgent]
+    E -->|Scrapes weather site| F[Weather Data]
+    F --> E
+    E --> D
+    D --> C
+    C -->|create completion| G[OpenRouterClient]
+    G -->|Send prompt with data| H[OpenRouter API]
+    H -->|LLM response| G
+    G --> C
+    C --> B
+    B -->|Send response| A
+|
+```
+|
+### File and Line Number References
+|
+- **FastAPI Chat Endpoint**: The process starts at the `/api/chat` endpoint in [`src/weather_llm_demo/main.py:145`](src/weather_llm_demo/main.py:145).
+- **MCP Tool Call**: The `chat` function calls the `handle_tool_call` method in [`src/weather_llm_demo/mcp_server.py:34`](src/weather_llm_demo/mcp_server.py:34).
+- **Weather Agent**: The `MCPWeatherServer` uses the `WeatherAgent` to fetch data in [`src/weather_llm_demo/weather_agent.py`](src/weather_llm_demo/weather_agent.py).
+- **OpenRouter Client**: The final response is generated by the `create_completion` method in [`src/weather_llm_demo/openrouter_client.py:23`](src/weather_llm_demo/openrouter_client.py:23).
 
-## Why UV?
-
-- **⚡ Fast**: 10-100x faster than pip
-- **🔒 Reliable**: Built-in lock file support
-- **🎯 Precise**: Exact dependency resolution
-- **📦 Modern**: Built in Rust, designed for modern Python
-- **🔄 Compatible**: Works with existing Python projects
 
 ## Troubleshooting
 
@@ -146,7 +152,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```bash
 # Clean and reinstall
 rm -rf .venv uv.lock
-uv sync
+make install
 ```
 
 ### Port already in use
@@ -157,41 +163,74 @@ lsof -ti:8000 | xargs kill -9
 
 ## Development Workflow
 
-1. **Add dependencies**:
-   ```bash
-   uv add fastapi uvicorn
-   ```
+1.  **Add dependencies**:
+    ```bash
+    uv add fastapi uvicorn
+    ```
 
-2. **Add dev dependencies**:
-   ```bash
-   uv add --dev pytest black ruff
-   ```
+2.  **Add dev dependencies**:
+    ```bash
+    uv add --dev pytest black ruff
+    ```
 
-3. **Update all dependencies**:
-   ```bash
-   uv sync --upgrade
-   ```
+3.  **Update all dependencies**:
+    ```bash
+    uv sync --upgrade
+    ```
 
-4. **Run tests**:
-   ```bash
-   uv run pytest
-   ```
+4.  **Run tests**:
+    ```bash
+    uv run pytest
+    ```
 
-5. **Format code**:
-   ```bash
-   uv run black .
-   uv run ruff check .
-   ```
+5.  **Format code**:
+    ```bash
+    uv run black .
+    uv run ruff check .
+    ```
 
-## Environment Variables
+## Configuration
 
-Create a `.env` file for configuration:
+This project uses a combination of a dedicated API key file for secrets and a `.env` file for non-secret configuration.
+
+### API Key (Secret)
+
+The OpenRouter API key is considered a secret and **must** be stored in a file named `.openrouter_api_key` in the root of the project. This file is listed in `.gitignore` to prevent accidental commits.
+
+```bash
+echo "your-openrouter-api-key" > .openrouter_api_key
+```
+
+### Environment Variables (`.env` file)
+
+For non-secret configuration, you can create a `.env` file in the project root. An example is provided in `.env.example`.
 
 ```env
-OPENROUTER_API_KEY=your-key-here
+# .env
+
+# -- Server Configuration --
+# Host and port for the web server.
 HOST=0.0.0.0
 PORT=8000
+
+# -- Weather Station --
+# Find your station ID on a weather service like Weather Underground.
+STATION_ID=IROME8278
+LOCATION="Rome, Italy"
+
+# -- LLM Configuration --
+# Specifies the model to use from OpenRouter for tool-calling.
+# See https://openrouter.ai/docs#models for available models.
+TOOL_CALLING_OPENROUTER_LLM_MODEL=qwen/qwen3-14b
 ```
+
+**Variable Roles:**
+
+*   `HOST`: The IP address the server will listen on. `0.0.0.0` makes it accessible on your local network.
+*   `PORT`: The port the server will run on.
+*   `STATION_ID`: The unique identifier for the weather station to pull data from.
+*   `LOCATION`: A human-readable name for the location, used for display purposes.
+*   `TOOL_CALLING_OPENROUTER_LLM_MODEL`: The specific language model that will be used for generating weather-aware responses.
 
 ## API Endpoints
 
@@ -202,5 +241,3 @@ PORT=8000
 - `GET /docs` - API documentation
 
 ---
-
-Enjoy the blazing fast dependency management with UV! 🚀
