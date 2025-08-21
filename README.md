@@ -1,4 +1,4 @@
-# 🌤️ Weather LLM Demo
+# LLM powered chatbot with (🌤️ Weather) tool calling
 
 A simple demo of a weather aware LLM powered chatbot using a weather agent.
 
