@@ -12,8 +12,7 @@ from .mcp_server import MCPWeatherServer
 from .openrouter_client import OpenRouterClient
 # Load environment variables from .env file
 load_dotenv()
-
-app = FastAPI(title="Weather LLM Demo - Rome IROME8278")
+app = FastAPI(title="Weather LLM Demo")
 
 # Enable CORS
 app.add_middleware(
@@ -29,8 +28,11 @@ weather_agent = WeatherAgent()
 mcp_server = MCPWeatherServer()
 openrouter_client = OpenRouterClient()
 
+# Get station ID from environment variables
+STATION_ID = os.getenv("STATION_ID")
+
 # Italian system prompt
-SYSTEM_PROMPT = """You are a weather assistant for Rome, Italy (Station IROME8278).
+SYSTEM_PROMPT = """You are an assistant giving weather-sensitive advice.
 ALWAYS respond in the same language as the user's question.
 Personalize your recommendations based on the weather data provided by the agent.
 Be mindful of the current time. For example, if it's evening, the recommendations should be for the evening and night, not for the maximum temperature of the day.
@@ -111,7 +113,7 @@ async def chat(request: ChatRequest):
         ]
 
         # Add weather context
-        weather_context = "\n\n[Current weather data from IROME8278]:\n"
+        weather_context = f"\n\n[Current weather data from {STATION_ID}]:\n"
         current = weather_data["result"]["current"]
         weather_context += f"Ora attuale: {datetime.now().strftime('%H:%M')}, "
         weather_context += f"Temperatura: {current.get('temperature_c')}°C, "
@@ -146,7 +148,7 @@ async def chat(request: ChatRequest):
 @app.get("/api/health")
 async def health():
     """Health check endpoint"""
-    return {"status": "healthy", "service": "Weather LLM Demo", "station": "IROME8278"}
+    return {"status": "healthy", "service": "Weather LLM Demo", "station": STATION_ID}
 
 
 @app.get("/api/config")
@@ -154,7 +156,7 @@ async def get_config():
     """Get configuration information"""
     return {
         "llm_model": os.getenv("TOOL_CALLING_OPENROUTER_LLM_MODEL", "openai/gpt-3.5-turbo"),
-        "station_id": os.getenv("STATION_ID", "IROME8278"),
+        "station_id": os.getenv("STATION_ID"),
         "location": os.getenv("LOCATION", "Rome, Italy")
     }
 
@@ -163,6 +165,6 @@ if __name__ == "__main__":
     import uvicorn
 
     print("🌤️  Starting Weather LLM Demo Server...")
-    print("📍 Station: Rome IROME8278")
+    print(f"📍 Station: Rome {STATION_ID}")
     print("🔗 Open http://localhost:8000 in your browser")
     uvicorn.run(app, host="0.0.0.0", port=8000)

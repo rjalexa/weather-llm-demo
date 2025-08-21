@@ -1,16 +1,24 @@
 import httpx
+import httpx
 import json
+import os
 from bs4 import BeautifulSoup
 from typing import Dict, Any
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class WeatherAgent:
     """Weather agent that scrapes Weather Underground data"""
 
     def __init__(self):
-        self.station_url = "https://www.wunderground.com/dashboard/pws/IROME8278"
-        self.forecast_url = "https://www.wunderground.com/weather/it/rome/IROME8278"
+        station_id = os.getenv("STATION_ID")
+        if not station_id:
+            raise ValueError("STATION_ID not set in environment variables")
+        self.station_url = f"https://www.wunderground.com/dashboard/pws/{station_id}"
+        self.forecast_url = f"https://www.wunderground.com/weather/it/rome/{station_id}"
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
@@ -57,7 +65,7 @@ class WeatherAgent:
                 "uv_index": latest_obs.get("uvHigh"),
                 "description": "Scraped from Weather Underground JSON",
                 "timestamp": datetime.now().isoformat(),
-                "station": "IROME8278",
+                "station": os.getenv("STATION_ID"),
             }
             
             if conditions["wind_kmh"] is not None:
@@ -79,7 +87,7 @@ class WeatherAgent:
                 "feels_like_c": 25.0,
                 "uv_index": 4,
                 "timestamp": datetime.now().isoformat(),
-                "station": "IROME8278",
+                "station": os.getenv("STATION_ID"),
             }
 
     async def get_forecast(self) -> Dict[str, Any]:
@@ -150,6 +158,6 @@ class WeatherAgent:
         return {
             "current": current,
             "forecast": forecast,
-            "location": "Rome, Italy",
-            "station_id": "IROME8278",
+            "location": os.getenv("LOCATION"),
+            "station_id": os.getenv("STATION_ID"),
         }
